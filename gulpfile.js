@@ -39,4 +39,10 @@ var opts = {
   devServerPort: 9021
 };
 
+gulp.task('start-backend', function() {
+  nodemon({
+    script: path.resolve(__dirname, 'server/server')
+  });
+});
+
 devGulpTasks(gulp, opts);

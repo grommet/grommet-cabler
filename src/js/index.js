@@ -1,6 +1,7 @@
 require("../scss/index.scss");
 
 var React = require('react');
+var ReactDOM = require('react-dom');
 var Locale = require('grommet/utils/Locale');
 var Cabler = require('./components/Cabler');
 
@@ -13,6 +14,6 @@ try {
 }
 
 var element = document.getElementById('content');
-React.render(React.createElement(Cabler, {locales: localeData.locale, messages: localeData.messages}), element);
+ReactDOM.render(React.createElement(Cabler, {locales: localeData.locale, messages: localeData.messages}), element);
 
 document.body.classList.remove('loading');

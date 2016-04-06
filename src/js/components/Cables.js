@@ -59,7 +59,7 @@ class Cables extends Component {
       }
       rows.push(
         <tr key={cable.index} onClick={this._onToggle.bind(this, cable)}>
-          <td>{cable.index}</td>
+          <td><strong>{cable.index}</strong></td>
           <td>1</td>
           <td>?</td>
           <td>{cable.ids[0]}</td>

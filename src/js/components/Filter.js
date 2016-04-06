@@ -64,7 +64,7 @@ class Filter extends Component {
             label="All" checked={checkAll}
             onChange={this._onChangeNodeAll} />
         );
-        result.unshift(<h4 key="header">Nodes</h4>);
+        result.unshift(<h4 key="header"><strong>Nodes</strong></h4>);
       }
     }
     return result;
@@ -92,7 +92,7 @@ class Filter extends Component {
             label="All" checked={checkAll}
             onChange={this._onChangeDataPathAll} />
         );
-        result.unshift(<h4 key="header">Data Paths</h4>);
+        result.unshift(<h4 key="header"><strong>Data Paths</strong></h4>);
       }
     }
     return result;
@@ -106,7 +106,8 @@ class Filter extends Component {
         dropAlign={{right: 'right'}} pad="none"
         direction="column" closeOnClick={false}>
         <Anchor href="" onClick={this._onReset}>Reset</Anchor>
-        <Box pad="medium" direction="column">
+        <Box pad={{horizontal: 'medium', vertical: 'small', between: 'small'}}
+          direction="column">
           {nodes}
           {dataPaths}
         </Box>

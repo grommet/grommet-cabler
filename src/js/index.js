@@ -1,19 +1,39 @@
 require("../scss/index.scss");
 
-var React = require('react');
-var ReactDOM = require('react-dom');
-var Locale = require('grommet/utils/Locale');
-var Cabler = require('./components/Cabler');
+import React from 'react';
+import ReactDOM from 'react-dom';
+import { Provider } from 'react-redux';
+import { IntlProvider, addLocaleData } from 'react-intl';
+import en from 'react-intl/locale-data/en';
+import { getCurrentLocale, getLocaleData } from 'grommet/utils/Locale';
+import store from './store';
+import Cabler from './components/Cabler';
 
-var locale = Locale.getCurrentLocale();
-var localeData;
+const locale = getCurrentLocale();
+addLocaleData(en);
+
+let messages;
 try {
-  localeData = Locale.getLocaleData(require('../messages/' + locale));
+  // rtl driven by hardcoding languages for now
+  if ('he' === locale || 'ar' === locale.slice(0, 2)) {
+    document.documentElement.classList.add("rtl");
+  } else {
+    document.documentElement.classList.remove("rtl");
+  }
+  messages = require('../messages/' + locale);
 } catch (e) {
-  localeData = Locale.getLocaleData(require('../messages/en-US'));
+  messages = require('../messages/en-US');
 }
+const localeData = getLocaleData(messages, locale);
 
-var element = document.getElementById('content');
-ReactDOM.render(React.createElement(Cabler, {locales: localeData.locale, messages: localeData.messages}), element);
+let element = document.getElementById('content');
+
+ReactDOM.render((
+  <Provider store={store}>
+    <IntlProvider locale={localeData.locale} messages={localeData.messages}>
+      <Cabler />
+    </IntlProvider>
+  </Provider>
+), element);
 
 document.body.classList.remove('loading');

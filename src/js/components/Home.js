@@ -1,26 +1,24 @@
-// (C) Copyright 2014-2015 Hewlett Packard Enterprise Development LP
+// (C) Copyright 2014-2016 Hewlett Packard Enterprise Development LP
 
-var React = require('react');
-var Split = require('grommet/components/Split');
-var Section = require('grommet/components/Section');
-var Configuration = require('./Configuration');
+import React, { Component } from 'react';
+import Split from 'grommet/components/Split';
+import Section from 'grommet/components/Section';
+import Configuration from './Configuration';
 
-var Home = React.createClass({
+export default class Home extends Component {
 
-  propTypes: {
-    data: React.PropTypes.object.isRequired
-  },
+  constructor () {
+    super();
+    this._onResponsive = this._onResponsive.bind(this);
+    this.state = {};
+  }
 
-  getInitialState: function () {
-    return {};
-  },
-
-  _onResponsive: function (responsive) {
+  _onResponsive (responsive) {
     this.setState({responsive: responsive});
-  },
+  }
 
-  render: function() {
-    var image;
+  render () {
+    let image;
     if ('multiple' === this.state.responsive) {
       image = (
         <Section full={true} pad="none"
@@ -31,11 +29,8 @@ var Home = React.createClass({
     return (
       <Split flex="left" separator={true} onResponsive={this._onResponsive}>
         {image}
-        <Configuration data={this.props.data} />
+        <Configuration />
       </Split>
     );
   }
-
-});
-
-module.exports = Home;
+}

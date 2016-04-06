@@ -1,44 +1,45 @@
-// (C) Copyright 2014-2015 Hewlett Packard Enterprise Development LP
+// (C) Copyright 2014-2016 Hewlett Packard Enterprise Development LP
 
-var React = require('react');
-var Article = require('grommet/components/Article');
-var Header = require('grommet/components/Header');
-var Title = require('grommet/components/Title');
-var Footer = require('grommet/components/Footer');
-var Form = require('grommet/components/Form');
-var FormFields = require('grommet/components/FormFields');
-var FormField = require('grommet/components/FormField');
-var Menu = require('grommet/components/Menu');
-var Button = require('grommet/components/Button');
-var Actions = require('../actions/Actions');
+import React, { Component, PropTypes } from 'react';
+import { connect } from 'react-redux';
+import { configure } from '../actions';
+import Article from 'grommet/components/Article';
+import Header from 'grommet/components/Header';
+import Title from 'grommet/components/Title';
+import Footer from 'grommet/components/Footer';
+import Form from 'grommet/components/Form';
+import FormFields from 'grommet/components/FormFields';
+import FormField from 'grommet/components/FormField';
+import Menu from 'grommet/components/Menu';
+import Button from 'grommet/components/Button';
 
-var Configuration = React.createClass({
+class Configuration extends Component {
 
-  propTypes: {
-    data: React.PropTypes.object.isRequired
-  },
+  constructor () {
+    super();
+    this._onConfigure = this._onConfigure.bind(this);
+  }
 
-  _onConfigure: function (event) {
+  _onConfigure (event) {
     event.preventDefault();
     let configuration = {
-      model: this.refs.model.getDOMNode().value,
-      numNodes: parseInt(this.refs.nodes.getDOMNode().value),
-      numDrives: parseInt(this.refs.drives.getDOMNode().value)
+      model: this.refs.model.value,
+      numNodes: parseInt(this.refs.nodes.value),
+      numDrives: parseInt(this.refs.drives.value)
     };
-    Actions.configure(configuration);
-  },
+    this.props.dispatch(configure(configuration));
+  }
 
-  render: function() {
-    var options = this.props.data.configurationOptions;
-    var configuration = this.props.data.configuration;
-    var models = options.models.map(function (model) {
+  render () {
+    const { title, options, configuration } = this.props;
+    const models = options.models.map(function (model) {
       return <option key={model}>{model}</option>;
     });
 
     return (
       <Article>
         <Header fixed={true} pad={{horizontal: 'medium'}}>
-          <Title>{this.props.data.title}</Title>
+          <Title>{title}</Title>
         </Header>
         <Form pad="medium">
           <FormFields>
@@ -70,7 +71,18 @@ var Configuration = React.createClass({
       </Article>
     );
   }
+}
 
+Configuration.propTypes = {
+  configuration: PropTypes.object.isRequired,
+  options: PropTypes.object.isRequired,
+  title: PropTypes.string.isRequired
+};
+
+let select = (state, props) => ({
+  configuration: state.configuration,
+  options: state.configurationOptions,
+  title: state.title
 });
 
-module.exports = Configuration;
+export default connect(select)(Configuration);

@@ -1,63 +1,65 @@
-// (C) Copyright 2014-2015 Hewlett Packard Enterprise Development LP
+// (C) Copyright 2014-2016 Hewlett Packard Enterprise Development LP
 
-var React = require('react');
-var Split = require('grommet/components/Split');
-var Article = require('grommet/components/Article');
-var Header = require('grommet/components/Header');
-var Title = require('grommet/components/Title');
-var Section = require('grommet/components/Section');
-var Topology = require('grommet/components/Topology');
-var Menu = require('grommet/components/Menu');
-var Anchor = require('grommet/components/Anchor');
-var Filter = require('./Filter');
-var Cables = require('./Cables');
-var Actions = require('../actions/Actions');
+import React, { Component, PropTypes } from 'react';
+import { connect } from 'react-redux';
+import { clearConfiguration } from '../actions';
+import Split from 'grommet/components/Split';
+import Article from 'grommet/components/Article';
+import Header from 'grommet/components/Header';
+import Title from 'grommet/components/Title';
+import Section from 'grommet/components/Section';
+import Topology from 'grommet/components/Topology';
+import Menu from 'grommet/components/Menu';
+import Button from 'grommet/components/Button';
+import Filter from './Filter';
+import Cables from './Cables';
 
-var Diagram = React.createClass({
+class Diagram extends Component {
 
-  propTypes: {
-    data: React.PropTypes.object
-  },
+  constructor () {
+    super();
+    this._onHome = this._onHome.bind(this);
+    this._onToggleCables = this._onToggleCables.bind(this);
+    this._onResponsive = this._onResponsive.bind(this);
 
-  getInitialState: function () {
-    return {showCables: false};
-  },
+    this.state = {showCables: false};
+  }
 
-  componentDidUpdate: function () {
+  componentDidUpdate () {
     // scroll to first link if not visible
-    let topologyData = this.props.data.topologyData;
-    if (topologyData.links.length > 0) {
-      let port = document.getElementById(topologyData.links[0].ids[0]);
+    const { links } = this.props;
+    if (links.length > 0) {
+      let port = document.getElementById(links[0].ids[0]);
       if (port) {
         // TODO:
       }
     }
-  },
+  }
 
-  _onHome: function (event) {
+  _onHome (event) {
     event.preventDefault();
-    Actions.clearConfiguration();
-  },
+    this.props.dispatch(clearConfiguration());
+  }
 
-  _onToggleCables: function (event) {
+  _onToggleCables (event) {
     event.preventDefault();
     this.setState({showCables: ! this.state.showCables});
-  },
+  }
 
-  _onResponsive: function (responsive) {
+  _onResponsive (responsive) {
     this.setState({responsive: responsive});
-  },
+  }
 
-  _renderTopology: function () {
-    let topologyData = this.props.data.topologyData;
+  _renderTopology () {
+    const { racks, links } = this.props;
 
-    let racks = topologyData.racks.map(function (rack) {
+    const parts = racks.map(function (rack) {
 
-      var devices = rack.contents.map(function (device) {
+      const devices = rack.contents.map(function (device) {
 
-        var slots = device.slots.map(function (slot) {
+        const slots = device.slots.map(function (slot) {
 
-          var ports = slot.ports.map(function (port) {
+          const ports = slot.ports.map(function (port) {
             return (
               <Topology.Part key={port.name} label={port.name} status="disabled"
                 id={port.id} align="center" />
@@ -90,30 +92,30 @@ var Diagram = React.createClass({
     });
 
     return (
-      <Topology links={topologyData.links} linkOffset={72}>
+      <Topology links={links} linkOffset={72}>
         <Topology.Parts direction="row" align="end">
-          {racks}
+          {parts}
         </Topology.Parts>
       </Topology>
     );
-  },
+  }
 
-  render: function() {
-    let topologyData = this.props.data.topologyData;
-    var article;
+  render () {
+    const { title } = this.props;
+    let article;
     if (! this.state.showCables || 'multiple' === this.state.responsive) {
-      var cablesControl;
+      let cablesControl;
       if (! this.state.showCables) {
-        cablesControl = <Anchor href="" onClick={this._onToggleCables}>Cables</Anchor>;
+        cablesControl = <Button onClick={this._onToggleCables}>Cables</Button>;
       }
-      let topology = this._renderTopology();
+      const topology = this._renderTopology();
 
       article = (
         <Article>
           <Header pad={{horizontal: "medium"}} justify="between">
-            <Title onClick={this._onHome}>{this.props.data.title}</Title>
+            <Title onClick={this._onHome}>{title}</Title>
             <Menu inline={true} direction="row" align="center" responsive={false}>
-              <Filter topologyData={topologyData} />
+              <Filter />
               {cablesControl}
             </Menu>
           </Header>
@@ -124,10 +126,10 @@ var Diagram = React.createClass({
       );
     }
 
-    var cables;
+    let cables;
     if (this.state.showCables) {
       cables = (
-        <Cables cables={topologyData.cables} onClose={this._onToggleCables} />
+        <Cables onClose={this._onToggleCables} />
       );
     }
 
@@ -138,7 +140,18 @@ var Diagram = React.createClass({
       </Split>
     );
   }
+}
 
+Diagram.propTypes = {
+  links: PropTypes.array.isRequired,
+  racks: PropTypes.array.isRequired,
+  title: PropTypes.string.isRequired
+};
+
+let select = (state, props) => ({
+  links: state.topologyData.links,
+  racks: state.topologyData.racks,
+  title: state.title
 });
 
-module.exports = Diagram;
+export default connect(select)(Diagram);

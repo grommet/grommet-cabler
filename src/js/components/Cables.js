@@ -1,59 +1,63 @@
-// (C) Copyright 2014-2015 Hewlett Packard Enterprise Development LP
+// (C) Copyright 2014-2016 Hewlett Packard Enterprise Development LP
 
-var React = require('react');
-var Article = require('grommet/components/Article');
-var Header = require('grommet/components/Header');
-var Menu = require('grommet/components/Menu');
-var Anchor = require('grommet/components/Anchor');
-var CloseIcon = require('grommet/components/icons/Clear');
-var Table = require('grommet/components/Table');
-var Legend = require('grommet/components/Legend');
-var Actions = require('../actions/Actions');
+import React, { Component, PropTypes } from 'react';
+import { connect } from 'react-redux';
+import { toggleCableHighlight, toggleNodeDataPathHighlight } from '../actions';
+import Sidebar from 'grommet/components/Sidebar';
+import Header from 'grommet/components/Header';
+import Menu from 'grommet/components/Menu';
+import Anchor from 'grommet/components/Anchor';
+import CloseIcon from 'grommet/components/icons/base/Close';
+import Table from 'grommet/components/Table';
+import Legend from 'grommet/components/Legend';
 
-var Cables = React.createClass({
+class Cables extends Component {
 
-  propTypes: {
-    cables: React.PropTypes.arrayOf(React.PropTypes.object).isRequired,
-    onClose: React.PropTypes.func.isRequired
-  },
+  constructor () {
+    super();
+    this._onToggle = this._onToggle.bind(this);
+    this._onToggleNodeDataPath = this._onToggleNodeDataPath.bind(this);
+  }
 
-  _onToggle: function (cable) {
-    Actions.toggleCableHighlight(cable);
-  },
+  _onToggle (cable) {
+    this.props.dispatch(toggleCableHighlight(cable.index));
+  }
 
-  _onToggleNodeDataPath: function (node, dataPath) {
-    Actions.toggleNodeDataPathHighlight(node, dataPath);
-  },
+  _onToggleNodeDataPath (nodeName, dataPathName) {
+    this.props.dispatch(toggleNodeDataPathHighlight(nodeName, dataPathName));
+  }
 
-  render: function() {
-    var selection = [];
-    var cables = [];
-    var dataPath;
-    var node;
-    this.props.cables.forEach(function (cable) {
-      if (cable.dataPath !== dataPath || cable.node !== node) {
+  render () {
+    const { cables } = this.props;
+    let selected = [];
+    let rows = [];
+    let dataPathName;
+    let nodeName;
+    cables.forEach(cable => {
+      if (cable.dataPathName !== dataPathName || cable.nodeName !== nodeName) {
         if (cable.dataPath.highlight && cable.node.highlight) {
-          selection.push(cables.length);
+          selected.push(rows.length);
         }
-        let series = [{
-          label: cable.node.name + ' ' + cable.dataPath.name,
+        const series = [{
+          label: cable.nodeName + ' ' + cable.dataPathName,
           colorIndex: cable.dataPath.colorIndex
         }];
-        cables.push(
-          <tr key={cable.node.name + cable.dataPath.name}
-            onClick={this._onToggleNodeDataPath.bind(this, cable.node, cable.dataPath)}>
+        rows.push(
+          <tr key={cable.nodeName + cable.dataPathName}
+            onClick={this._onToggleNodeDataPath.bind(this, cable.nodeName,
+              cable.dataPathName)}>
             <td colSpan="5">
               <Legend series={series} />
             </td>
           </tr>
         );
-        dataPath = cable.dataPath;
-        node = cable.node;
+        dataPathName = cable.dataPathName;
+        nodeName = cable.nodeName;
       }
       if (cable.highlight) {
-        selection.push(cables.length);
+        selected.push(rows.length);
       }
-      cables.push(
+      rows.push(
         <tr key={cable.index} onClick={this._onToggle.bind(this, cable)}>
           <td>{cable.index}</td>
           <td>1</td>
@@ -62,17 +66,17 @@ var Cables = React.createClass({
           <td>{cable.ids[1]}</td>
         </tr>
       );
-    }, this);
+    });
 
     return (
-      <Article>
+      <Sidebar size="large">
         <Header pad={{horizontal: "medium"}} justify="between" fixed={true}>
           Cables
           <Menu inline={true} direction="row" align="center" responsive={false}>
             <Anchor href="" onClick={this.props.onClose}><CloseIcon /></Anchor>
           </Menu>
         </Header>
-        <Table selectable={true} selection={selection}>
+        <Table selectable={true} selected={selected}>
           <thead>
             <tr>
               <th>#</th>
@@ -83,13 +87,21 @@ var Cables = React.createClass({
             </tr>
           </thead>
           <tbody>
-            {cables}
+            {rows}
           </tbody>
         </Table>
-      </Article>
+      </Sidebar>
     );
   }
+}
 
+Cables.propTypes = {
+  cables: PropTypes.array.isRequired,
+  onClose: PropTypes.func.isRequired
+};
+
+let select = (state, props) => ({
+  cables: state.topologyData.cables
 });
 
-module.exports = Cables;
+export default connect(select)(Cables);

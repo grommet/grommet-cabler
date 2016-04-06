@@ -1,59 +1,60 @@
-// (C) Copyright 2014-2015 Hewlett Packard Enterprise Development LP
+// (C) Copyright 2014-2016 Hewlett Packard Enterprise Development LP
 
-var React = require('react');
-var Reflux = require('reflux');
-var App = require('grommet/components/App');
-var Actions = require('../actions/Actions');
-var Store = require('../stores/Store');
-var Home = require('./Home');
-var Diagram = require('./Diagram');
+import React, { Component } from 'react';
+import { connect } from 'react-redux';
+import { configureFromLocation, set } from '../actions';
+import App from 'grommet/components/App';
+import Home from './Home';
+import Diagram from './Diagram';
 
-var Cabler = React.createClass({
+class Cabler extends Component {
 
-  mixins: [Reflux.ListenerMixin],
+  constructor () {
+    super();
+    this.state = {};
+  }
 
-  getInitialState: function () {
-    return Store.getInitialState();
-  },
-
-  componentDidMount: function () {
-    this.listenTo(Store, this._onChange);
+  componentDidMount () {
     window.onpopstate = this._popState;
     this._noPush = true;
-    Actions.configureFromLocation(window.location.pathname, window.location.search);
-  },
+    this.props.dispatch(configureFromLocation(window.location.pathname,
+      window.location.search));
+    ;
+  }
 
-  _pushState: function () {
-    if (this.state.location) {
-      window.history.pushState(this.state, this.state.location.label, this.state.location.path);
+  _pushState () {
+    const { location, data } = this.props;
+    if (location) {
+      window.history.pushState(data, location.label, location.path);
     }
-  },
+  }
 
-  _popState: function (event) {
+  _popState (event) {
     this._noPush = true;
     if (event.state) {
-      Actions.set(event.state);
+      this.props.dispatch(set(event.state));
     } else {
       //Actions.clearConfiguration();
     }
-  },
+  }
 
-  _onChange: function (data) {
-    let push;
-    if (! this._noPush) {
-      push = this._pushState;
-    } else {
-      this._noPush = false;
-    }
-    this.replaceState(data, push);
-  },
+  // _onChange (data) {
+  //   let push;
+  //   if (! this._noPush) {
+  //     push = this._pushState;
+  //   } else {
+  //     this._noPush = false;
+  //   }
+  //   this.replaceState(data, push);
+  // }
 
-  render: function() {
-    var contents;
-    if (this.state.topologyData) {
-      contents = <Diagram data={this.state} />;
+  render () {
+    const { data } = this.props;
+    let contents;
+    if (data.topologyData) {
+      contents = <Diagram />;
     } else {
-      contents = <Home data={this.state} />;
+      contents = <Home />;
     }
 
     return (
@@ -62,7 +63,11 @@ var Cabler = React.createClass({
       </App>
     );
   }
+}
 
+let select = (state, props) => ({
+  location: state.location,
+  data: state
 });
 
-module.exports = Cabler;
+export default connect(select)(Cabler);

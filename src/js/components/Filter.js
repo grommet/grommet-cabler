@@ -1,98 +1,111 @@
-// (C) Copyright 2014-2015 Hewlett Packard Enterprise Development LP
+// (C) Copyright 2014-2016 Hewlett Packard Enterprise Development LP
 
-var React = require('react');
-var FilterIcon = require('grommet/components/icons/Filter');
-var Menu = require('grommet/components/Menu');
-var Box = require('grommet/components/Box');
-var Anchor = require('grommet/components/Anchor');
-var CheckBox = require('grommet/components/CheckBox');
-var Actions = require('../actions/Actions');
+import React, { Component, PropTypes } from 'react';
+import { connect } from 'react-redux';
+import { toggleNodeHighlight, clearAllNodeHighlights, toggleDataPathHighlight,
+  clearAllDataPathHighlights, clearAllHighlights } from '../actions';
+import FilterIcon from 'grommet/components/icons/base/Filter';
+import Menu from 'grommet/components/Menu';
+import Box from 'grommet/components/Box';
+import Anchor from 'grommet/components/Anchor';
+import CheckBox from 'grommet/components/CheckBox';
 
-var Filter = React.createClass({
+class Filter extends Component {
 
-  propTypes: {
-    topologyData: React.PropTypes.object.isRequired
-  },
+  constructor () {
+    super();
+    this._onChangeNode = this._onChangeNode.bind(this);
+    this._onChangeNodeAll = this._onChangeNodeAll.bind(this);
+    this._onChangeDataPath = this._onChangeDataPath.bind(this);
+    this._onChangeDataPathAll = this._onChangeDataPathAll.bind(this);
+    this._onReset = this._onReset.bind(this);
+  }
 
-  _onChangeNode: function (node) {
-    Actions.toggleNodeHighlight(node);
-  },
+  _onChangeNode (node) {
+    this.props.dispatch(toggleNodeHighlight(node.name));
+  }
 
-  _onChangeNodeAll: function () {
-    Actions.clearAllNodeHighlights();
-  },
+  _onChangeNodeAll () {
+    this.props.dispatch(clearAllNodeHighlights());
+  }
 
-  _onChangeDataPath: function (dataPath) {
-    Actions.toggleDataPathHighlight(dataPath);
-  },
+  _onChangeDataPath (dataPath) {
+    this.props.dispatch(toggleDataPathHighlight(dataPath.name));
+  }
 
-  _onChangeDataPathAll: function () {
-    Actions.clearAllDataPathHighlights();
-  },
+  _onChangeDataPathAll () {
+    this.props.dispatch(clearAllDataPathHighlights());
+  }
 
-  _onReset: function (event) {
+  _onReset (event) {
     event.preventDefault();
-    Actions.clearAllHighlights();
-  },
+    this.props.dispatch(clearAllHighlights());
+  }
 
-  render: function() {
-    let topologyData = this.props.topologyData;
-    let nodes = [];
+  _renderNodes () {
+    const { nodes } = this.props;
+    let result = [];
     // don't bother if there's only one node
-    if (topologyData.nodes.length > 1) {
+    if (nodes.length > 1) {
       let checkAll = true;
-      for (let i = 0; i < topologyData.nodes.length; i += 1) {
-        let node = topologyData.nodes[i];
+      result = nodes.map((node, index) => {
         if (node.highlight) {
           checkAll = false;
         }
-        nodes.push(
-          <CheckBox id={"node-" + i} key={i}
-            label={topologyData.nodes[i].name}
-            checked={node.highlight}
+        return (
+          <CheckBox id={"node-" + index} key={index}
+            label={node.name} checked={node.highlight}
             onChange={this._onChangeNode.bind(this, node)} />
         );
-      }
-      if (nodes.length > 1) {
-        nodes.unshift(
+      });
+      if (result.length > 1) {
+        result.unshift(
           <CheckBox id="node-all" key="all"
-            label="All"
-            checked={checkAll}
+            label="All" checked={checkAll}
             onChange={this._onChangeNodeAll} />
         );
-        nodes.unshift(<h4 key="header">Nodes</h4>);
+        result.unshift(<h4 key="header">Nodes</h4>);
       }
     }
+    return result;
+  }
 
-    let dataPaths = [];
-    let checkAll = true;
-    for (let i = 0; i < topologyData.dataPaths.length; i += 1) {
-      let dataPath = topologyData.dataPaths[i];
-      if (dataPath.highlight) {
-        checkAll = false;
+  _renderDataPaths () {
+    const { dataPaths } = this.props;
+    let result = [];
+    // don't bother if there's only one dataPath
+    if (dataPaths.length > 1) {
+      let checkAll = true;
+      result = dataPaths.map((dataPath, index) => {
+        if (dataPath.highlight) {
+          checkAll = false;
+        }
+        return (
+          <CheckBox id={"data-path-" + index} key={index}
+            label={dataPath.name} checked={dataPath.highlight}
+            onChange={this._onChangeDataPath.bind(this, dataPath)} />
+        );
+      });
+      if (result.length > 1) {
+        result.unshift(
+          <CheckBox id="data-path-all" key="all"
+            label="All" checked={checkAll}
+            onChange={this._onChangeDataPathAll} />
+        );
+        result.unshift(<h4 key="header">Data Paths</h4>);
       }
-      dataPaths.push(
-        <CheckBox id={"data-path-" + (i + 1)} key={i}
-          label={dataPath.name}
-          checked={dataPath.highlight}
-          onChange={this._onChangeDataPath.bind(this, dataPath)} />
-      );
     }
-    dataPaths.unshift(
-      <CheckBox id="data-path-all" key="all"
-        label="All"
-        checked={checkAll}
-        onChange={this._onChangeDataPathAll} />
-    );
-    dataPaths.unshift(<h4 key="header">Data Paths</h4>);
+    return result;
+  }
 
+  render () {
+    const nodes = this._renderNodes();
+    const dataPaths = this._renderDataPaths();
     return (
       <Menu icon={<FilterIcon />}
         dropAlign={{right: 'right'}} pad="none"
         direction="column" closeOnClick={false}>
-
         <Anchor href="" onClick={this._onReset}>Reset</Anchor>
-
         <Box pad="medium" direction="column">
           {nodes}
           {dataPaths}
@@ -100,7 +113,16 @@ var Filter = React.createClass({
       </Menu>
     );
   }
+}
 
+Filter.propTypes = {
+  dataPaths: PropTypes.array.isRequired,
+  nodes: PropTypes.array.isRequired
+};
+
+let select = (state, props) => ({
+  dataPaths: state.topologyData.dataPaths,
+  nodes: state.topologyData.nodes
 });
 
-module.exports = Filter;
+export default connect(select)(Filter);
